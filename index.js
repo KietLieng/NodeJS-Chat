@@ -30,15 +30,15 @@ function updateNameList() {
 	str = "";
         for (object in clientNames) {
           //console.log(object, clientNames[object]);
-    	  str += "<li>" + clientNames[object] + "</li>";
+    	  str += "<li id='" + object +  "'><b>" + clientNames[object] + "</b></li>";
         }
 	return str;
 }
 
 io.on('connection', function(socket){
   io.on('connect', function(client) {
-    clientNames[client['client']['conn']['id']] = client.nickname;
-    console.log("connect ", clientNames);
+    	clientNames[client['client']['conn']['id']] = client.nickname;
+    	console.log("connect ", clientNames);
   });
  
   socket.on('disconnect', function() {
@@ -51,7 +51,7 @@ io.on('connection', function(socket){
  
   socket.on('uname', function(changeName) {
         clientNames[socket['client']['conn']['id']] = changeName;
-	console.log('changing names ?', changeName);
+	console.log('changing names', changeName);
   });
 
   socket.on('updateContactList', function(msg){
@@ -61,17 +61,14 @@ io.on('connection', function(socket){
 
   socket.on('chat message', function(msg){
     console.log('message: ' + msg);
-
-    //console.log("socket uname is " + socket.nickname); 
     io.emit('chat message', msg);
-    console.log(socket['client']['conn']['id']);
-    console.log(socket['client']['conn']['remoteAddress']);
+    console.log(socket['client']['conn']['id'], socket['client']['conn']['remoteAddress']);
   });
 
-  socket.on('typing', function(msg){
-    console.log(msg);
+  socket.on('typing', function(user){
+    console.log(user + ": typing");
+    io.emit('typing', socket['client']['conn']['id']);
   });
-    
 });
 
 http.listen(3000, function(){

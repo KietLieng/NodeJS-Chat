@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
   <head>
-    <title>Socket.IO chat</title>
+    <title>Anon Chat</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
       body { font: 13px Helvetica, Arial; }
@@ -16,7 +16,7 @@
 	      color: green; 
 	      font-weight: bolder;
       }
-    
+      #messages { height: 40%; overflow-y: auto; } 
       .contactlist {
 	overflow-y: auto;
 }
@@ -27,15 +27,17 @@
       .rcol {
 	      float: right;
 	      width: 20%;
-	      border-left: dotted blue;
+	      border-left: dotted #7FFF00;
       }
     </style>
   </head>
   <body>
+  <div id="formArea">
     <form action="">
       <input id="uname" value="anon"/>
       <input id="m" autocomplete="off" /><button>Send</button>
     </form>
+  </div>
   <div class="messageArea">
   <div class="lcol">
       <ul id="messages"></ul>
@@ -46,26 +48,47 @@
       </ul>
       </div>
       </div>
-
     <script src="/socket.io/socket.io.js"></script>
 <script src="http://code.jquery.com/jquery-2.1.1.js"></script>
 <script>
   var socket = io();
+  var typingList = [];
+  var pingLength = 2000;
   
+  socket.nickname = $('#uname').val();
+  socket.emit('uname', socket.nickname);
+  socket.emit('updateContactList', socket.nickname);
+
   function grabName() {
-	  return "<span class='chatName'>" + $('#uname').val() + "</span>";
+	  return $('#uname').val();
   }
 
+  function updateTypeStatus(user) {
+	var currentUser = "";
+	$( "#contactlist li" ).each(function( index ) {
+		if (user == $(this).attr('id')) {
+			currentUser = $(this).text();
+			setTimeout(function() { 
+				$("#" + user).text(currentUser);
+				delete typingList[user];
+			}, pingLength);
+			$(this).text($(this).text() + " (typing)");	
+			//alert($(this).text() + "   " + $(this).attr('id'));
+		}
+	});	
+  }
+
+  var ownMessage = 0;
   $('form').submit(function(){
 	if ($('#m').val()) {
-		socket.emit('chat message', grabName() + ": " + $('#m').val());
+		ownMessage++;
+		$('#messages').append($('<li>').html( $('#m').val()) );	
+		socket.emit('chat message', "<span class='chatName'>" + grabName() + "</span>: " + $('#m').val());
+		$('#m').val('');
 	}
 	return false;
   });
 
-  socket.nickname = $('#uname').val();
-  socket.emit('uname', socket.nickname);
-  socket.emit('updateContactList', socket.nickname);
   $('#uname').change(function() {
 	socket.nickname = $('#uname').val();
         socket.emit('uname', socket.nickname);
@@ -73,16 +96,34 @@
   });
 
   $('#m').keypress(function() {
-   socket.emit('typing', grabName() + ": typing");
+   socket.emit('typing', grabName());
   });
 
   socket.on('chat message', function(msg){
-	$('#messages').append($('<li>').html(msg));	
-	$('#m').val('');
+	if (ownMessage > 0) {
+		ownMessage--;
+	}
+	else {
+	//	alert("messaging not breadcasting");
+               $('#messages').append($('<li>').html( msg));    
+               $('#m').val('');
+	}
   });
-
+ 
   socket.on('updateContactList', function(myList){
 	$('#contactlist').html(myList);	
+	//alert("socket updatecontactlist");	
+  });
+
+  socket.on('typing', function(user) {
+	//$('#contactlist').html();
+	if (user in typingList) {
+		// do nothing
+	} 
+	else {
+		typingList[user] = 1;
+		updateTypeStatus(user);
+	}
   });
 </script>
   </body>
