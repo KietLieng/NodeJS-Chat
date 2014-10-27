@@ -61,6 +61,16 @@ function getDate() {
 
 }
 
+// kill lingering dead connections that might float around the array for accurate contact keeping
+function cleanupDeadConnections() {
+	for (var key in clientNames) {
+		if ('undefined' === typeof clientNames[key]) {
+			console.log("dead connections are ", key, clientNames[key]);
+			delete clientNames[key];
+		}
+	}
+}
+
 
 io.on('connection', function(socket){
   // iterate through all connections and update the client
@@ -79,16 +89,6 @@ io.on('connection', function(socket){
 	}
     	//console.log("connect ", clientNames);
   });
-
-  // kill lingering dead connections that might float around the array for accurate contact keeping
-  function cleanupDeadConnections() {
-	for (var key in clientNames) {
-		if ('undefined' === typeof clientNames[key]) {
-			console.log("dead connections are ", key, clientNames[key]);
-			delete clientNames[key];
-		}
-	}
-  }
 
   // when you disconnection delete the list and just to be safe that we have no duplicates clean the array
   // all connections should have a name by now so any undefined values are orphan connections
@@ -138,6 +138,31 @@ io.on('connection', function(socket){
     console.log(user + ": typing");
     checkAndUpdateNameList(socket['client']['conn']['id'], socket.nickname);
     io.emit('typing', socket['client']['conn']['id']);
+  });
+
+  function findSetCommand(msg) {
+	msgArray = msg.split(" ");
+	index = 0;
+	finalMsg = "";
+	$.each(msgArray, function( key, value) {
+		if (0 == index++) {
+			// skip
+		}
+		else {
+			finalMsg += value;
+		}		
+	});
+	if (msgArray[0] == "/title") {
+		$(document).prop('title', finalMsg);
+	        $('#messages').append($('<li class="chatStatus3">').html("Room is now called: " + finalMsg));
+	        hugBottom();
+	}
+  }
+
+  // update all connections that a user on the list is typing
+  socket.on('set command', function(msg) {
+	  io.emit("set command", msg);
+	  console.log("set command", msg);
   });
 });
 

@@ -18,39 +18,11 @@
       .lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
       .contactlist { overflow-y: auto; }
       .rcol { float: right; padding: 10px; width: 10%; border-left: 0px dotted #7FFF00; }
-      #lcol {
-	    border: 2px dashed blue;
-	    position: absolute;
-	    top: 0;
-	    bottom: 0;
-	    left: 0;
-	    right: 0;
-      }
-
-      .innerMessageArea {
-	xborder-left: 2px dotted red;
-	position: absolute;
-    	top: 90px;
-    	bottom: 10px;
-    	left: 10px;
-	width: 85%;
-    	xright: 250px;
-    	overflow-y: auto;
-      }
-
-      .chatStatus1 {
-	font-style: italic;
-	color: orange;
-	font-size: 18px;
-	text-align: center;
-      }
-
-      .chatStatus2 {
-	font-style: italic;
-	color: red;
-	font-size: 18px;
-	text-align: center;
-      }
+      #lcol { border: 2px dashed blue;	    position: absolute;	    top: 0;	    bottom: 0;	    left: 0;	    right: 0;      }
+      .innerMessageArea {  position: absolute;    	top: 90px;    	bottom: 10px;    	left: 10px;	width: 85%;   	overflow-y: auto;      }
+      .chatStatus1 {	font-style: italic; 	color: orange;	font-size: 18px;	text-align: center;      }
+      .chatStatus2 { 	font-style: italic;	color: red;	font-size: 18px;	text-align: center;      }
+      .chatStatus3 {	font-style: italic; 	color: blue;	font-size: 18px;	text-align: center;      }
     </style>
   </head>
   <body>
@@ -89,7 +61,8 @@
   var currentName = "";
   // trim the li listing 
   var liMax = 40;
-
+  // default title
+  var defaultTitle = "Anon Chat";
 
   if ("anon" == $('#uname').val()) {
 	$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
@@ -113,7 +86,7 @@
 	  }
   }
 
-  console.log(socket);
+  // update status of the users 
   function updateTypeStatus(user) {
 	var currentNameValue = "";
 	$( "#contactlist li" ).each(function( index ) {
@@ -139,16 +112,29 @@
 	});	
   }
 
+  // want the scroller to hug the bottom of the pages
   function hugBottom() {
  	trimLi();
 	$("#messages").animate({ scrollTop: $("#messages").height() }, "slow");
 	console.log( $("#messages").height());
   }
 
+  // first text within string at any position
   function textContains(msg, searchStr) {
 	  return (msg.toLowerCase().indexOf(searchStr) >= 0);
   }
 
+  // find text at the start of string
+  function isSetCommand(msg, searchStr) {
+	  return (msg.toLowerCase().indexOf(searchStr) == 0);
+  }
+
+  // supportered set commands 
+  function isValidSetCommand(msg) {
+	return isSetCommand(msg, "/title");
+  }
+
+  // find if the string contains an image link
   function isPicture(msg) {
 	return (textContains(msg, ".jpg") || 
 			textContains(msg, ".jpeg") || 
@@ -158,6 +144,7 @@
 			textContains(msg, ".jtiff"));
   }
 
+  // disassemble sentence and put them back together with hyperlink / image link
   function hyperLinkMe(msg) {
 	msgArray = msg.split(" ");
 	finalMsg = "";
@@ -178,12 +165,18 @@
   }
 
   $('form').submit(function(){
-	if ($('#m').val()) {
-		ownMessage++;
-		$('#messages').append($('<li class="myText">').html( hyperLinkMe($('#m').val()) + " :<span class='chatName'>" + grabName() + "</span>"));	
-		socket.emit('chat message', "<span class='chatName'>" + grabName() + "</span>: " + $('#m').val());
-		$('#m').val('');
-		hugBottom();
+	msg = $('#m').val()
+	if (msg) {
+		if (isValidSetCommand(msg)) {
+			socket.emit('set command', msg);
+		}
+		else {
+			ownMessage++;
+			$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + grabName() + "</span>"));	
+			socket.emit('chat message', "<span class='chatName'>" + grabName() + "</span>: " + msg);
+			hugBottom();
+		}
+ 		$('#m').val('');
 	}
 	return false;
   });
@@ -198,6 +191,30 @@
     socket.emit('typing', grabName());
   });
 
+  function findSetCommand(msg) {
+	msgArray = msg.split(" ");
+	index = 0;
+	finalMsg = "";
+	$.each(msgArray, function( key, value) {
+		if (0 == index++) {
+			// skip
+		}
+		else {
+			finalMsg += value + " ";
+		}		
+	});
+	finalMsg.trim();
+	if (msgArray[0] == "/title") {
+		$(document).prop('title', defaultTitle + ": " + finalMsg);
+	        $('#messages').append($('<li class="chatStatus3">').html("Room is now called: " + finalMsg));
+	        hugBottom();
+	}
+  }
+
+  socket.on('set command', function(msg) {
+	findSetCommand(msg);
+  });
+
   socket.on('chat message', function(msg){
 	if (ownMessage > 0) {
 		ownMessage--;
@@ -210,11 +227,13 @@
 	}
   });
  
+  // update contact list from main socket
   socket.on('updateContactList', function(myList){
 	$('#contactlist').html(myList);	
 	//alert("socket updatecontactlist");	
   });
 
+  // if user is already typing don't update the list
   socket.on('typing', function(user) {
 	//$('#contactlist').html();
 	if (user in typingList) {
