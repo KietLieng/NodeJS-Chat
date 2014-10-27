@@ -43,12 +43,16 @@ io.on('connection', function(socket){
  
   socket.on('disconnect', function() {
      	console.log('disconnecting');
-    	io.emit('chat message', clientNames[socket['client']['conn']['id']] + " disconnected");
+    	io.emit('leave room', clientNames[socket['client']['conn']['id']] + " disconnected");
     	delete clientNames[socket['client']['conn']['id']];
 	io.emit('updateContactList', updateNameList());
 	console.log("disconnect ",clientNames);
   });
  
+  socket.on("join room", function(name) {
+  	io.emit('join room', name + " joined the room");
+  });
+
   socket.on('uname', function(changeName) {
         clientNames[socket['client']['conn']['id']] = changeName;
 	console.log('changing names', changeName);
