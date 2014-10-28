@@ -35,7 +35,7 @@ function updateNameList() {
 	str = "";
 	for (object in clientNames) {
 		//console.log(object, clientNames[object]);
-		str += "<li id='" + object +  "'><b>" + clientNames[object] + "</b></li>";
+		str += "<li id='" + object +  "' class='flagoff' onclick=\"switchme(this);\">" + clientNames[object] + "</li>";
 	}
 	return str;
 }
@@ -92,26 +92,6 @@ function getThresholdTime() {
 	return now.getMonth() + 1 + now.getDate() + now.getFullYear() + now.getHours() + now.getMinutes() + now.getSeconds();
 }
 
-function findClientsSocket(roomId, namespace) {
-    var res = []
-    , ns = io.of(namespace ||"/");    // the default namespace is "/"
-
-    if (ns) {
-        for (var id in ns.connected) {
-            if(roomId) {
-                var index = ns.connected[id].rooms.indexOf(roomId) ;
-                if(index !== -1) {
-                    res.push(ns);
-                }
-            } else {
-		    console.log(ns);
-                res.push(ns.nickname);
-            }
-        }
-    }
-    return res;
-}
-
 io.on('connection', function(socket){
 	// iterate through all connections and update the client
 
@@ -119,7 +99,7 @@ io.on('connection', function(socket){
 	// we want to detect if the nickname is avaliable if it isn't issue a who are you command to find out
 	// else we set the command and try to clean up dead connections
 	io.on('connect', function(client) {
-		console.log("connect unknown name " + client.nickname);
+		console.log("connect client ", client['adapter']['rooms']);
 		if(typeof client.nickname === 'undefined') {
 			io.emit("who are you?", "");
 		}
@@ -135,6 +115,7 @@ io.on('connection', function(socket){
 	socket.on('disconnect', function() {
 		console.log('disconnecting');
 		io.emit('leave room', clientNames[socket['client']['conn']['id']] + " disconnected (" + getDate() + ")");
+		// delete clientSockets
 		delete clientNames[socket['client']['conn']['id']];
 		cleanupDeadConnections();
 		io.emit('updateContactList', updateNameList());
@@ -146,6 +127,7 @@ io.on('connection', function(socket){
 	socket.on("who are you?", function(name) {
 		console.log("who are you?", name);
 		clientNames[socket['client']['conn']['id']] = name;
+		socket.nickname = name;
 		io.emit('updateContactList', updateNameList());
 	});
 
@@ -177,18 +159,7 @@ io.on('connection', function(socket){
 	// a socket has posted a message update all other connections besides this current connection
 	socket.on('private message', function(obj){
 		console.log('private message: ', obj);
-		foundClient = "";
-		for (var key in clientNames) {
-			if (obj["to"] == clientNames[key]) {
-				foundClient = clientNames[key];
-			}
-		}
-		for (var currentConnection in findClientsSocket(null)) {
-			console.log(currentConnection);		
-		}
-//		socket.broadcast.send('chat message', msg);
-//		console.log(socket['client']['conn']['id'], socket['client']['conn']['remoteAddress']);
-//		resetLastTyped();
+//		socket.to(obj['to']).emit("private message", obj);
 	});
 
 	// a socket has posted a message update all other connections besides this current connection

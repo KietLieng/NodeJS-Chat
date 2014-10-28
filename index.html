@@ -6,8 +6,8 @@
 			* { margin: 0; padding: 0; box-sizing: border-box; }
 			body { font: 13px Helvetica, Arial; }
 			form { xbackground: #000; padding: 3px; width: 100%; }
-			form input { border: 1px solid black; padding: 10px; width: 90%; margin-right: .5%; }
-			form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+			form input { border: 1px solid black; padding: 10px; width: 80%; margin-right: .5%; }
+			form button { width: 19%; background: rgb(130, 224, 255); border: none; padding: 10px; }
 			#messages, .rcol li { list-style-type: none; margin: 0; padding: 0; }
 			#messages li, .contactlist li { padding: 5px 10px; }
 			#messages li:nth-child(odd) { background: #eee; }
@@ -17,13 +17,19 @@
 			.chatName { color: green; font-weight: bolder; }
 			.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
 			.contactlist { overflow-y: auto; }
-			.rcol { float: right; padding: 10px; width: 10%; border-left: 0px dotted #7FFF00; }
+			.rcol { float: right; padding: 10px; width: 125px; border-left: 0px dotted #7FFF00; }
 			#lcol { border: 2px dashed blue; position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
 			.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 85%; overflow-y: auto; }
 			.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
 			.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
 			.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
 			li.chatStatus4 { font-style: italic; color: white;	background-color: black; font-size: 18px; text-align: center; }
+			#messages li.chatStatus51 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 18px; }
+			#messages li.chatStatus52 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 18px; }
+      .flagoff { font-weight: bolder; }
+      .flagon { font-weight: bolder; color: red; }
+			div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
+			div.pmflagon { float: left; background-color: red; margin-right: 5px; }
 		</style>
 	</head>
 	<body>
@@ -49,7 +55,6 @@
 		<script src="http://code.jquery.com/jquery-2.1.1.js"></script>
 		<script>
 			// review image for all pictures
-
 			var socket = io();
 			// will keep track of if we should update status of typing
 			var typingList = [];
@@ -65,7 +70,9 @@
 			// default title
 			var defaultTitle = "Anon Chat";
 			// emoticon directory
-			var emoteDir = "emote/";	
+			var emoteDir = "emote/";
+      // keep track of private chatlist
+      var privateChatList = [];
 
 			if ("anon" == $('#uname').val()) {
 				$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
@@ -73,9 +80,18 @@
 			socket.nickname = currentName = $('#uname').val();
 			socket.emit('uname', socket.nickname);
 			socket.emit('join room', socket.nickname);
-			socket.emit('updateContactList', socket.nickname);
+			socket.emit('updateContactList', socket.nickname);			
 
-			function grabName() {
+      function switchme(obj) {
+        if ($(obj).attr("class") == "flagoff") {
+          $(obj).attr("class", "flagon");
+        }
+        else {
+          $(obj).attr("class", "flagoff");
+        }
+      }
+
+      function getName() {
 				return $('#uname').val();
 			}
 
@@ -208,33 +224,6 @@
 				return finalMsg.trim();
 			}
 
-			$('form').submit(function(){
-				msg = $('#m').val()
-				if (msg) {
-					if (isValidSetCommand(msg)) {
-						socket.emit('set command', msg);
-					}
-					else {
-						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + grabName() + getDate() + "</span>"));	
-						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + grabName() + "</span>: " + msg);
-						hugBottom();
-					}
-					$('#m').val('');
-				}
-				return false;
-			});
-
-			$('#uname').change(function() {
-				previousName = currentName;
-				socket.nickname = currentName = $('#uname').val();
-				socket.emit('uname', socket.nickname);
-				socket.emit('updateContactList', socket.nickname);
-			});
-
-			$('#m').keypress(function() {
-				socket.emit('typing', grabName());
-			});
-
 			function findSetCommand(msg) {
 				msgArray = msg.split(" ");
 				index = 0;
@@ -259,19 +248,93 @@
 				}
 			}
 
+
+      function hasPrivateCheck() {
+        // clean up chatlist
+        privateChatList = [];
+        hasChecks = false;
+ 				$("#contactlist li" ).each(function( index, value) {
+					if ("flagon" == $(this).attr('class')) {
+            privateChatList.push($(this).attr('id'));
+            hasChecks = true;
+          }
+        });
+        return hasChecks;
+      }
+
+      function findPrivateChatUser(userID) {
+//        console.log(privateChatList);
+        for (var key in privateChatList) {
+//          console.log(privateChatList[key]);
+          if (userID == privateChatList[key]) {
+            return true;
+          }
+        }
+        return false;
+      }
+      
+      function persistPrivateChatStatus() {
+ 				$("#contactlist li" ).each(function( index, value) {
+					if (findPrivateChatUser($(this).attr('id'))) {
+            $(this).attr('class', "flagon");
+          }
+        });
+      }
+
+			$('form').submit(function(){
+				msg = $('#m').val()
+				if (msg) {
+					if (isValidSetCommand(msg)) {
+						socket.emit('set command', msg);
+					}
+          else if (hasPrivateCheck()) {
+            for (var key in privateChatList) {
+   						socket.emit('private message', { from: getName(), 
+	  									 to: privateChatList[key],
+		  								 msg: msg });
+            }
+ 						$('#messages').append($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " : ***PRIVATE***<span class='chatName'>" + getName() + getDate() + "</span>"));	
+          }
+					else {
+						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
+						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + getName() + "</span>: " + msg);
+					}
+					hugBottom();
+					$('#m').val('');
+				}
+				return false;
+			});
+
+			$('#uname').change(function() {
+				previousName = currentName;
+				socket.nickname = currentName = $('#uname').val();
+				socket.emit('uname', socket.nickname);
+				socket.emit('updateContactList', socket.nickname);
+			});
+
+			$('#m').keypress(function() {
+				socket.emit('typing', getName());
+			});
+
 			socket.on('set command', function(msg) {
 				findSetCommand(msg);
 			});
 
 			socket.on('chat message', function(msg){
-			//	alert("messaging not breadcasting");
-					$('#messages').append($('<li>').html(hyperLinkMe(msg)));
-					hugBottom();
+				alert("messaging not breadcasting");
+				$('#messages').append($('<li>').html(hyperLinkMe(msg)));
+				hugBottom();
+			});
+
+			socket.on('private message', function(obj){
+				$('#messages').append($('<li class="chatStatus51">').html(hyperLinkMe("PM from " + obj['from'] + ": " + obj['msg'])));
+				hugBottom();
 			});
 
 			// update contact list from main socket
 			socket.on('updateContactList', function(myList){
-				$('#contactlist').html(myList);	
+				$('#contactlist').html(myList);
+        persistPrivateChatStatus();
 				//alert("socket updatecontactlist");	
 			});
 
@@ -289,7 +352,7 @@
 
 			// 
 			socket.on("who are you?", function() {
-				socket.emit("who are you?", grabName());
+				socket.emit("who are you?", getName());
 			});
 
 			socket.on('join room', function(msg){
@@ -304,3 +367,4 @@
 		</script>
 	</body>
 </html>
+
