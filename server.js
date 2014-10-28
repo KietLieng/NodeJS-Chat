@@ -66,11 +66,13 @@ function cleanupDeadConnections() {
 	}
 }
 
+// set last typed useg time and id
 function setLastTyped(user) {
 	lastTyped = user;
 	lastTypedTime = getThresholdTime();
 }
 
+// reset new last typed
 function resetLastTyped() {
 	lastTyped = "";
 	lastTypedTime = getThresholdTime();
@@ -87,6 +89,7 @@ function lastTypedThreshold(user) {
 	return false;
 }
 
+// get time to prevent throttling
 function getThresholdTime() {
 	var now = new Date();
 	return now.getMonth() + 1 + now.getDate() + now.getFullYear() + now.getHours() + now.getMinutes() + now.getSeconds();
@@ -99,7 +102,7 @@ io.on('connection', function(socket){
 	// we want to detect if the nickname is avaliable if it isn't issue a who are you command to find out
 	// else we set the command and try to clean up dead connections
 	io.on('connect', function(client) {
-		console.log("connect client ", client['adapter']['rooms']);
+//		console.log("connect client ", client['adapter']['rooms']);
 		if(typeof client.nickname === 'undefined') {
 			io.emit("who are you?", "");
 		}
@@ -150,7 +153,7 @@ io.on('connection', function(socket){
 
 	// a socket has posted a message update all connections the message
 	socket.on('chat message', function(msg){
-		console.log('message: ' + msg);
+		//console.log('message: ' + msg);
 		io.emit('chat message', msg);
 		console.log(socket['client']['conn']['id'], socket['client']['conn']['remoteAddress']);
 		resetLastTyped();
@@ -158,14 +161,14 @@ io.on('connection', function(socket){
 
 	// a socket has posted a message update all other connections besides this current connection
 	socket.on('private message', function(obj){
-		console.log('private message: ', obj);
-//		socket.to(obj['to']).emit("private message", obj);
+		//console.log('private message: ', obj);
+		socket.to(obj['to']).emit("private message", obj);
 	});
 
 	// a socket has posted a message update all other connections besides this current connection
 	socket.on('b.chat message', function(msg){
-		console.log('b.message: ' + msg);
-		socket.broadcast.send('chat message', msg);
+		//console.log('b.message: ' + msg);
+		io.emit('chat message', msg);
 		console.log(socket['client']['conn']['id'], socket['client']['conn']['remoteAddress']);
 		resetLastTyped();
 	});

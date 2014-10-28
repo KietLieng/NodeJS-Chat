@@ -73,6 +73,8 @@
 			var emoteDir = "emote/";
       // keep track of private chatlist
       var privateChatList = [];
+      // private label
+      var privateLabel = "%%PRIVATE%%";
 
 			if ("anon" == $('#uname').val()) {
 				$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
@@ -293,7 +295,7 @@
 	  									 to: privateChatList[key],
 		  								 msg: msg });
             }
- 						$('#messages').append($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " : ***PRIVATE***<span class='chatName'>" + getName() + getDate() + "</span>"));	
+            $('#messages').append($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " <span class='chatName'>: " + privateLabel + " " + getName() + getDate() + "</span>"));	
           }
 					else {
 						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
@@ -316,18 +318,21 @@
 				socket.emit('typing', getName());
 			});
 
+      socket.on('connected', function(msg) {
+          alert("connected");
+      });
+
 			socket.on('set command', function(msg) {
 				findSetCommand(msg);
 			});
 
 			socket.on('chat message', function(msg){
-				alert("messaging not breadcasting");
 				$('#messages').append($('<li>').html(hyperLinkMe(msg)));
 				hugBottom();
 			});
 
 			socket.on('private message', function(obj){
-				$('#messages').append($('<li class="chatStatus51">').html(hyperLinkMe("PM from " + obj['from'] + ": " + obj['msg'])));
+          $('#messages').append($('<li class="chatStatus51">').html(hyperLinkMe("<span class='chatName'>" + obj['from'] + " " + privateLabel + " :</span> " + obj['msg'])));
 				hugBottom();
 			});
 
