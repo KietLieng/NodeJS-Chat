@@ -1,0 +1,309 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Anon Chat</title>
+		<style>
+			* { margin: 0; padding: 0; box-sizing: border-box; }
+			body { font: 13px Helvetica, Arial; }
+			form { xbackground: #000; padding: 3px; width: 100%; }
+			form input { border: 1px solid black; padding: 10px; width: 90%; margin-right: .5%; }
+			form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+			#messages, .rcol li { list-style-type: none; margin: 0; padding: 0; }
+			#messages li, .contactlist li { padding: 5px 10px; }
+			#messages li:nth-child(odd) { background: #eee; }
+			.myText { text-align: right; }
+			.myText .chatName { color: red; }
+			.contactlist li:nth-child(even) { background: #eee; }
+			.chatName { color: green; font-weight: bolder; }
+			.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
+			.contactlist { overflow-y: auto; }
+			.rcol { float: right; padding: 10px; width: 10%; border-left: 0px dotted #7FFF00; }
+			#lcol { border: 2px dashed blue; position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
+			.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 85%; overflow-y: auto; }
+			.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
+			.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
+			.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
+			li.chatStatus4 { font-style: italic; color: white;	background-color: black; font-size: 18px; text-align: center; }
+		</style>
+	</head>
+	<body>
+		<div id="formArea">
+			<form action="">
+				<input id="uname" value="anon"/>
+				<input id="m" autocomplete="off" /><button>Send</button>
+			</form>
+		</div>
+		<div class="messageArea">
+			<div class="lcol">
+				<div class="innerMessageArea">
+					<ul id="messages"></ul>
+				</div>
+			</div>
+			<div class="rcol">
+				<ul id="contactlist" class="contactlist">
+					<li>anon</li>
+				</ul>
+			</div>
+		</div>
+		<script src="/socket.io/socket.io.js"></script>
+		<script src="http://code.jquery.com/jquery-2.1.1.js"></script>
+		<script>
+			// review image for all pictures
+
+			var socket = io();
+			// will keep track of if we should update status of typing
+			var typingList = [];
+			// ping length before going back to regular status
+			var pingLength = 2000;
+			// couldn't figure out the broadcast object flag to we are using a 
+			// our name this is important since we might change our name during the typing cooldown status
+			var currentName = "";
+			// previous name
+	 		var previousName = "";
+			// trim the li listing 
+			var liMax = 40;
+			// default title
+			var defaultTitle = "Anon Chat";
+			// emoticon directory
+			var emoteDir = "emote/";	
+
+			if ("anon" == $('#uname').val()) {
+				$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
+			}
+			socket.nickname = currentName = $('#uname').val();
+			socket.emit('uname', socket.nickname);
+			socket.emit('join room', socket.nickname);
+			socket.emit('updateContactList', socket.nickname);			
+
+			function getName() {
+				return $('#uname').val();
+			}
+
+			function boldMe(content) {
+				return "<b>" + content + "</b>";
+			}
+
+			function trimLi() {
+				if ($("#messages li").length > liMax) {
+					$("#messages li").first().remove();
+				}
+			}
+
+			// update status of the users 
+			function updateTypeStatus(user) {
+				var currentUserName = "";
+				$( "#contactlist li" ).each(function( index ) {
+					if (user == $(this).attr('id')) {
+						currentUserName = $(this).text();
+						// identify ourselves and set name with currentName
+						if (currentUserName == currentName) {
+							setTimeout(function() {
+								$("#" + user).html( boldMe(currentName));
+								delete typingList[user];
+							}, pingLength);
+						}
+						else {
+							// set the users next name
+							setTimeout(function() {
+								$("#" + user).html( boldMe(currentUserName));
+								delete typingList[user];
+							}, pingLength);
+						}
+						$(this).html( boldMe($(this).text() + " (typing)"));	
+						//alert($(this).text() + "   " + $(this).attr('id'));
+					}
+				});
+			}
+
+			// return proper dates
+			function getDate() {
+				// Create a date object with the current time
+				var now = new Date();
+				// Create an array with the current month, day and time
+//				var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
+				var date = [ now.getMonth() + 1, now.getDate() ];
+				// Create an array with the current hour, minute and second
+				var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
+				// Determine AM or PM suffix based on the hour
+				var suffix = ( time[0] < 12 ) ? "AM" : "PM";
+				// Convert hour from military time
+				time[0] = ( time[0] < 12 ) ? time[0] : time[0] - 12;
+				// If hour is 0, set it to 12
+				time[0] = time[0] || 12;
+				// If seconds and minutes are less than 10, add a zero
+				for ( var i = 1; i < 3; i++ ) {
+					if ( time[i] < 10 ) {
+						time[i] = "0" + time[i];
+					}
+				}
+				// Return the formatted string
+				return " (" + date.join("/") + " " + time.join(":") + " " + suffix + ") ";
+			}
+
+			// want the scroller to hug the bottom of the pages
+			function hugBottom() {
+				trimLi();
+				$("#messages").animate({ scrollTop: $("#messages").height() }, "slow");
+				console.log( $("#messages").height());
+			}
+
+			// first text within string at any position
+			function textContains(msg, searchStr) {
+				return (msg.toLowerCase().indexOf(searchStr) >= 0);
+			}
+
+			// find text at the start of string
+			function isSetCommand(msg, searchStr) {
+				return (msg.toLowerCase().indexOf(searchStr) == 0);
+			}
+
+			// supportered set commands 
+			function isValidSetCommand(msg) {
+				return isSetCommand(msg, "/title") || isSetCommand(msg, "/trout");
+			}
+
+			function isEmoticon(msg) {
+				return isSetCommand(msg, ":)") || isSetCommand(msg, ":(");
+			}
+
+			// find if the string contains an image link
+			function isPicture(msg) {
+				return (textContains(msg, ".jpg") || 
+				textContains(msg, ".jpeg") || 
+				textContains(msg, ".png") || 
+				textContains(msg, ".gif") || 
+				textContains(msg, ".tiff") || 
+				textContains(msg, ".jtiff"));
+			}
+
+			function replaceWithEmoticon(content) {
+				currentUrl = window.location.href.replace();
+				content = content.replace(":(", "<img src='" + emoteDir  + "sad.png' />");
+				content = content.replace(":)", "<img src='" + emoteDir + "happy.png' />");
+				content = content.replace(" :\/ ", "<img src='" + emoteDir + "annoyed.png' />");
+				content = content.replace(" :| ", "<img src='" + emoteDir + "straight.png' />");
+				return content;
+			}
+
+			// disassemble sentence and put them back together with hyperlink / image link
+			function hyperLinkMe(msg) {
+				msgArray = msg.split(" ");
+				finalMsg = "";
+				$.each(msgArray, function( key, value) {
+					if (value.toLowerCase().indexOf("http") == 0) {
+						if (isPicture(value)) {
+							finalMsg += "<img src='" + value + "' />";
+						}
+						else {
+							finalMsg += "<a href='" + value + "' target='newlink'>" + value + "</a> ";
+						}
+					}
+					else if (isEmoticon(value)) {
+						finalMsg  += replaceWithEmoticon(value);
+					}
+					else {
+						finalMsg += value + " ";
+					}
+				});
+				return finalMsg.trim();
+			}
+
+			$('form').submit(function(){
+				msg = $('#m').val()
+				if (msg) {
+					if (isValidSetCommand(msg)) {
+						socket.emit('set command', msg);
+					}
+					else {
+						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
+//						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + getName() + "</span>: " + msg);
+						socket.emit('private message', { from: getName(), 
+										 to: "anon",
+										 message: msg });
+						hugBottom();
+					}
+					$('#m').val('');
+				}
+				return false;
+			});
+
+			$('#uname').change(function() {
+				previousName = currentName;
+				socket.nickname = currentName = $('#uname').val();
+				socket.emit('uname', socket.nickname);
+				socket.emit('updateContactList', socket.nickname);
+			});
+
+			$('#m').keypress(function() {
+				socket.emit('typing', getName());
+			});
+
+			function findSetCommand(msg) {
+				msgArray = msg.split(" ");
+				index = 0;
+				finalMsg = "";
+				$.each(msgArray, function( key, value) {
+					if (0 == index++) {
+						// skip
+					}
+					else {
+						finalMsg += value + " ";
+					}
+				});
+				finalMsg.trim();
+				if (msgArray[0] == "/title") {
+					$(document).prop('title', defaultTitle + ": " + finalMsg);
+					$('#messages').append($('<li class="chatStatus3">').html("Room is now called: " + finalMsg + getDate()));
+					hugBottom();
+				}
+				else if (msgArray[0] == "/trout") {
+					$('#messages').append($('<li class="chatStatus4">').html("SLAP " + finalMsg + getDate()));
+					hugBottom();
+				}
+			}
+
+			socket.on('set command', function(msg) {
+				findSetCommand(msg);
+			});
+
+			socket.on('chat message', function(msg){
+			//	alert("messaging not breadcasting");
+					$('#messages').append($('<li>').html(hyperLinkMe(msg)));
+					hugBottom();
+			});
+
+			// update contact list from main socket
+			socket.on('updateContactList', function(myList){
+				$('#contactlist').html(myList);	
+				//alert("socket updatecontactlist");	
+			});
+
+			// if user is already typing don't update the list
+			socket.on('typing', function(user) {
+				//$('#contactlist').html();
+				if (user in typingList) {
+					// do nothing
+				} 
+				else {
+					typingList[user] = 1;
+					updateTypeStatus(user);
+				}
+			});
+
+			// 
+			socket.on("who are you?", function() {
+				socket.emit("who are you?", getName());
+			});
+
+			socket.on('join room', function(msg){
+				$('#messages').append($('<li class="chatStatus1">').html( msg));
+				hugBottom();
+			});
+
+			socket.on('leave room', function(msg){
+				$('#messages').append($('<li class="chatStatus2">').html( msg));
+				hugBottom();
+			});
+		</script>
+	</body>
+</html>

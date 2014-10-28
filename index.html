@@ -56,8 +56,6 @@
 			// ping length before going back to regular status
 			var pingLength = 2000;
 			// couldn't figure out the broadcast object flag to we are using a 
-			// variable to keep track of when it's our own message to avoid double posting
-			var ownMessage = 0;
 			// our name this is important since we might change our name during the typing cooldown status
 			var currentName = "";
 			// previous name
@@ -66,6 +64,8 @@
 			var liMax = 40;
 			// default title
 			var defaultTitle = "Anon Chat";
+			// emoticon directory
+			var emoteDir = "emote/";	
 
 			if ("anon" == $('#uname').val()) {
 				$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
@@ -91,12 +91,12 @@
 
 			// update status of the users 
 			function updateTypeStatus(user) {
-				var currentNameValue = "";
+				var currentUserName = "";
 				$( "#contactlist li" ).each(function( index ) {
 					if (user == $(this).attr('id')) {
-						currentNameValue = $(this).text();
-						// if can identify ourselves then set ourname
-						if (currentNameValue == currentName) {
+						currentUserName = $(this).text();
+						// identify ourselves and set name with currentName
+						if (currentUserName == currentName) {
 							setTimeout(function() {
 								$("#" + user).html( boldMe(currentName));
 								delete typingList[user];
@@ -105,7 +105,7 @@
 						else {
 							// set the users next name
 							setTimeout(function() {
-								$("#" + user).html( boldMe(currentNameValue));
+								$("#" + user).html( boldMe(currentUserName));
 								delete typingList[user];
 							}, pingLength);
 						}
@@ -175,13 +175,13 @@
 				textContains(msg, ".tiff") || 
 				textContains(msg, ".jtiff"));
 			}
-			var siteURL = "http://10.1.11.89/chat/emote/";
 
 			function replaceWithEmoticon(content) {
 				currentUrl = window.location.href.replace();
-				content = content.replace(":(", "<img src='" + siteURL + "sad.png' />");
-				content = content.replace(":)", "<img src='" + siteURL + "happy.jpg' />");
-//				content = content.replace(" :\/ ", "<img src='" + siteURL + "frown.jpg' />");
+				content = content.replace(":(", "<img src='" + emoteDir  + "sad.png' />");
+				content = content.replace(":)", "<img src='" + emoteDir + "happy.png' />");
+				content = content.replace(" :\/ ", "<img src='" + emoteDir + "annoyed.png' />");
+				content = content.replace(" :| ", "<img src='" + emoteDir + "straight.png' />");
 				return content;
 			}
 
@@ -215,9 +215,8 @@
 						socket.emit('set command', msg);
 					}
 					else {
-						ownMessage++;
 						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + grabName() + getDate() + "</span>"));	
-						socket.emit('chat message', "<span class='chatName'>" + getDate() + grabName() + "</span>: " + msg);
+						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + grabName() + "</span>: " + msg);
 						hugBottom();
 					}
 					$('#m').val('');
@@ -265,14 +264,9 @@
 			});
 
 			socket.on('chat message', function(msg){
-				if (ownMessage > 0) {
-					ownMessage--;
-				}
-				else {
-					//	alert("messaging not breadcasting");
+			//	alert("messaging not breadcasting");
 					$('#messages').append($('<li>').html(hyperLinkMe(msg)));
 					hugBottom();
-				}
 			});
 
 			// update contact list from main socket
