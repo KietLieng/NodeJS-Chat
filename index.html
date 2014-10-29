@@ -24,14 +24,14 @@
 			.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
 			.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
 			.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
-			li.chatStatus4 { font-style: italic; color: white;	background-color: black; font-size: 18px; text-align: center; }
-			#messages li.chatStatus51 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 18px; }
-			#messages li.chatStatus52 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 18px; }
+			.chatStatus4 { font-style: italic; color: white; background-color: black; font-size: 14px; text-align: center; }
+			#messages li.chatStatus51 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
+			#messages li.chatStatus52 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
       .flagoff { font-weight: bolder; }
       .flagon { font-weight: bolder; color: red; }
 			div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
 			div.pmflagon { float: left; background-color: red; margin-right: 5px; }
-			.clearBtn { border-bottom: 1px solid white; width: 9%; }
+			.clearBtn { font-weight: bolder; border-bottom: 1px solid white; width: 9%; }
 			.trimon { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  #7CFC00 }
 			.trimoff { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  red }
 		</style>
@@ -73,9 +73,9 @@
 			// trim switch to turn on or off
 			var trimSwitch = true;
 			// trim orientation from the to or from the bottom
-			var trimOrientation = "bottom";
+			var trimOrientation = "top";
 			// to append at the top or at the bottom
-			var appendOrientation = "top";
+			var appendOrientation = "bottom";
 			// default title
 			var defaultTitle = "Anon Chat";
 			// emoticon directory
@@ -370,7 +370,12 @@
 			});
 
 			$('#m').keypress(function() {
-				socket.emit('typing', getName());
+				if (hasPrivateCheck()) {
+					socket.emit('private typing', getName(), privateChatList);
+				}
+				else {
+					socket.emit('typing', getName());
+				}
 			});
 
       socket.on('connected', function(msg) {

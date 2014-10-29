@@ -17,7 +17,7 @@ app.get('/', function(req, res){
 app.use("/emote", express.static(__dirname + '/emote'));
 app
 
-// check to see 
+// check to see if names is on the list.  Remove if possible
 function checkAndUpdateNameList(id, name) {
 	if ("undefined" === typeof clientNames[id]) {
 		console.log("undefined clientNames " + id);
@@ -96,17 +96,20 @@ function getThresholdTime() {
 io.on('connection', function(socket){
 	// iterate through all connections and update the client
 
+	// on wake find out who's on line
+	io.emit("who are you?", "");
+
 	// when a socket tries to connect to main socket
 	// we want to detect if the nickname is avaliable if it isn't issue a who are you command to find out
 	// else we set the command and try to clean up dead connections
 	io.on('connect', function(client) {
   //		console.log("connect client ", client['adapter']['rooms']);
-		if(typeof client.nickname === 'undefined') {
+		if('undefined' === typeof client.nickname) {
 //			client.emit("who are you?", "");
 		}
 		else {
 			clientNames[client['client']['conn']['id']] = client.nickname;
-			cleanupDeadConnections();
+			//cleanupDeadConnections();
 		}
     client.emit("connected", client['client']['conn']['id']);
 	//console.log("connect ", clientNames);
@@ -172,6 +175,20 @@ io.on('connection', function(socket){
 		resetLastTyped();
 	});
 
+	// update all connections that a user on the list is typing
+	socket.on('private typing', function( user, users){
+		if (lastTypedThreshold(user)) {
+			console.log(user + ": typing");
+			checkAndUpdateNameList(socket['client']['conn']['id'], user);
+			socket.emit('typing', socket['client']['conn']['id']);
+			setLastTyped(user);
+		}
+//		console.log(users);
+    for (var key in users) {
+//			console.log("typing out to ", users[key]);
+			socket.to(users[key]).emit("typing", socket['client']['conn']['id']);
+		}
+	});
 
 	// update all connections that a user on the list is typing
 	socket.on('typing', function(user){
