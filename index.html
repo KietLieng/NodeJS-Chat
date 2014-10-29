@@ -9,17 +9,18 @@
 			form input { border: 1px solid black; padding: 10px; width: 80%; margin-right: .5%; }
 			form button { width: 19%; background: rgb(130, 224, 255); border: none; padding: 10px; }
 			#messages, .rcol li { list-style-type: none; margin: 0; padding: 0; }
-			#messages li, .contactlist li { padding: 5px 10px; }
+			#messages li { padding: 5px 10px; }
 			#messages li:nth-child(odd) { background: #eee; }
 			.myText { text-align: right; }
 			.myText .chatName { color: red; }
+ 			.contactlist { overflow-y: auto; border: 0px solid red; }
+      .contactlist li { padding: 5px 5px; border: 0px solid yellow; }
 			.contactlist li:nth-child(even) { background: #eee; }
 			.chatName { color: green; font-weight: bolder; }
+ 			.lcol { float: left; padding: 10px; width: 80%; border-right: 0px dashed blue; }
 			.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
-			.contactlist { overflow-y: auto; }
-			.rcol { float: right; padding: 10px; width: 125px; border-left: 0px dotted #7FFF00; }
-			#lcol { border: 2px dashed blue; position: absolute; top: 0; bottom: 0; left: 0; right: 0; }
-			.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 85%; overflow-y: auto; }
+			.rcol { float: right; padding: 10px; width: 15%; border-left: 0px dotted #7FFF00; }
+			.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 80%; overflow-y: auto; }
 			.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
 			.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
 			.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
@@ -66,7 +67,7 @@
 			// our name this is important since we might change our name during the typing cooldown status
 			var currentName = "";
 			// trim the li listing 
-			var liMax = 40;
+			var liMax = 50;
 			// default title
 			var defaultTitle = "Anon Chat";
 			// emoticon directory
