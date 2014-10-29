@@ -102,7 +102,7 @@ io.on('connection', function(socket){
 	io.on('connect', function(client) {
   //		console.log("connect client ", client['adapter']['rooms']);
 		if(typeof client.nickname === 'undefined') {
-			io.emit("who are you?", "");
+//			client.emit("who are you?", "");
 		}
 		else {
 			clientNames[client['client']['conn']['id']] = client.nickname;

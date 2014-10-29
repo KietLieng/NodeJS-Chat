@@ -16,7 +16,7 @@
  			.contactlist { overflow-y: auto; border: 0px solid red; }
       .contactlist li { padding: 5px 5px; border: 0px solid yellow; }
 			.contactlist li:nth-child(even) { background: #eee; }
-			.chatName { color: green; font-weight: bolder; }
+			.chatName { color: orange; font-weight: bolder; }
  			.lcol { float: left; padding: 10px; width: 80%; border-right: 0px dashed blue; }
 			.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
 			.rcol { float: right; padding: 10px; width: 15%; border-left: 0px dotted #7FFF00; }
@@ -31,13 +31,15 @@
       .flagon { font-weight: bolder; color: red; }
 			div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
 			div.pmflagon { float: left; background-color: red; margin-right: 5px; }
-      .clearBtn { border-bottom: 1px solid white; }
+			.clearBtn { border-bottom: 1px solid white; width: 9%; }
+			.trimon { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  #7CFC00 }
+			.trimoff { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  red }
 		</style>
 	</head>
 	<body>
 		<div id="formArea">
 			<form action="">
-        <input id="uname" value="anon"/><button class='clearBtn' type="button">clear</button>
+        <input id="uname" value="anon"/><button class='clearBtn' type="button">clear</button><button id='trimBtn' class='trimon' type="button">TRIM</button>
 				<input id="m" autocomplete="off" /><button>Send</button>
 			</form>
 		</div>
@@ -68,6 +70,12 @@
 			var currentName = "";
 			// trim the li listing 
 			var liMax = 50;
+			// trim switch to turn on or off
+			var trimSwitch = true;
+			// trim orientation from the to or from the bottom
+			var trimOrientation = "bottom";
+			// to append at the top or at the bottom
+			var appendOrientation = "top";
 			// default title
 			var defaultTitle = "Anon Chat";
 			// emoticon directory
@@ -88,7 +96,35 @@
       $(".clearBtn").click(function() {
    			$("#messages").html("");
       });
-      
+
+			$("#trimBtn").click(function() {
+				if ($(this).attr("class") == "trimoff") {
+					$(this).attr("class", "trimon");
+				}
+				else {
+					$(this).attr("class", "trimoff");
+				}
+				findTrimSwitch();
+      });
+
+			function findTrimSwitch() {
+				if ($("#trimBtn").attr("class") == "trimoff") {
+					trimSwitch = false;
+				}
+				else {
+					trimSwitch = true;
+				}
+			}
+
+			function appendToMessage(msg) {
+				if (appendOrientation == "top") {
+					$("#messages").prepend(msg);
+				}
+				else {
+					$("#messages").append(msg);
+				}
+			}
+
       function switchme(obj) {
         if ($(obj).attr("class") == "flagoff") {
           // only change if it's not me
@@ -115,8 +151,13 @@
 			}
 
 			function trimLi() {
-				if ($("#messages li").length > liMax) {
-					$("#messages li").first().remove();
+				while ($("#messages li").length > liMax) {
+					if (trimOrientation == "top") {
+						$("#messages li").first().remove();
+					}
+					else {
+						$("#messages li").last().remove();
+					}
 				}
 			}
 
@@ -173,7 +214,9 @@
 
 			// want the scroller to hug the bottom of the pages
 			function hugBottom() {
-				trimLi();
+				if (trimSwitch) {
+					trimLi();
+				}
 				$("#messages").animate({ scrollTop: $("#messages").height() }, "slow");
 				console.log( $("#messages").height());
 			}
@@ -254,11 +297,11 @@
 				finalMsg.trim();
 				if (msgArray[0] == "/title") {
 					$(document).prop('title', defaultTitle + ": " + finalMsg);
-					$('#messages').append($('<li class="chatStatus3">').html("Room is now called: " + finalMsg + getDate()));
+					appendToMessage($('<li class="chatStatus3">').html("Room is now called: " + finalMsg + getDate()));
 					hugBottom();
 				}
 				else if (msgArray[0] == "/trout") {
-					$('#messages').append($('<li class="chatStatus4">').html("SLAP " + finalMsg + getDate()));
+					appendToMessage($('<li class="chatStatus4">').html("SLAP " + finalMsg + getDate()));
 					hugBottom();
 				}
 			}
@@ -308,10 +351,10 @@
 	  									 to: privateChatList[key],
 		  								 msg: msg });
             }
-            $('#messages').append($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " <span class='chatName'>: " + privateLabel + " " + getName() + getDate() + "</span>"));	
+            appendToMessage($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " <span class='chatName'>:" + privateLabel + " " + getName() + getDate() + "</span>"));	
           }
 					else {
-						$('#messages').append($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
+						appendToMessage($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
 						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + getName() + "</span>: " + msg);
 					}
 					hugBottom();
@@ -331,7 +374,6 @@
 			});
 
       socket.on('connected', function(msg) {
-//          console.log("connected", msg);
           myID = msg;
       });
 
@@ -340,12 +382,12 @@
 			});
 
 			socket.on('chat message', function(msg){
-				$('#messages').append($('<li>').html(hyperLinkMe(msg)));
+				appendToMessage($('<li>').html(hyperLinkMe(msg)));
 				hugBottom();
 			});
 
 			socket.on('private message', function(obj){
-          $('#messages').append($('<li class="chatStatus51">').html(hyperLinkMe("<span class='chatName'>" + obj['from'] + " " + privateLabel + " :</span> " + obj['msg'])));
+          appendToMessage($('<li class="chatStatus51">').html(hyperLinkMe("<span class='chatName'>" + getDate() + obj['from'] + " " + privateLabel + ":</span> " + obj['msg'])));
 				hugBottom();
 			});
 
@@ -369,18 +411,18 @@
 				}
 			});
 
-			// 
+			// get the names of people 
 			socket.on("who are you?", function() {
 				socket.emit("who are you?", getName());
 			});
 
 			socket.on('join room', function(msg){
-				$('#messages').append($('<li class="chatStatus1">').html( msg));
+				appendToMessage($('<li class="chatStatus1">').html( msg));
 				hugBottom();
 			});
 
 			socket.on('leave room', function(msg){
-				$('#messages').append($('<li class="chatStatus2">').html( msg));
+				appendToMessage($('<li class="chatStatus2">').html( msg));
 				hugBottom();
 			});
 		</script>
