@@ -22,6 +22,7 @@ function checkAndUpdateNameList(id, name) {
 	if ("undefined" === typeof clientNames[id]) {
 		console.log("undefined clientNames " + id);
 		clientNames[id] = name;
+		console.log("set name like " + name);
 		updateNameList();
 	}
 }
@@ -166,7 +167,7 @@ io.on('connection', function(socket){
 	// a socket has posted a message update all other connections besides this current connection
 	socket.on('b.chat message', function(msg){
 		//console.log('b.message: ' + msg);
-		io.emit('chat message', msg);
+		socket.broadcast.emit('chat message', msg);
 		console.log(socket['client']['conn']['id'], socket['client']['conn']['remoteAddress']);
 		resetLastTyped();
 	});
@@ -176,7 +177,7 @@ io.on('connection', function(socket){
 	socket.on('typing', function(user){
 		if (lastTypedThreshold(user)) {
 			console.log(user + ": typing");
-			checkAndUpdateNameList(socket['client']['conn']['id'], socket.nickname);
+			checkAndUpdateNameList(socket['client']['conn']['id'], user);
 			io.emit('typing', socket['client']['conn']['id']);
 			setLastTyped(user);
 		}
