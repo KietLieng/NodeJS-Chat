@@ -13,12 +13,9 @@ app.get('/', function(req, res){
 	res.sendFile('index.html', { root: __dirname });
 });
 
-app.get('/private', function(req, res){
-	res.sendFile('private.html', { root: __dirname });
-});
-
 // setup static assets directory
 app.use("/emote", express.static(__dirname + '/emote'));
+app
 
 // check to see 
 function checkAndUpdateNameList(id, name) {
@@ -30,7 +27,7 @@ function checkAndUpdateNameList(id, name) {
 }
 
 
-// create string a return list for updating purposes
+// create string and return list for updating user list
 function updateNameList() {
 	str = "";
 	for (object in clientNames) {
@@ -102,7 +99,7 @@ io.on('connection', function(socket){
 	// we want to detect if the nickname is avaliable if it isn't issue a who are you command to find out
 	// else we set the command and try to clean up dead connections
 	io.on('connect', function(client) {
-//		console.log("connect client ", client['adapter']['rooms']);
+  //		console.log("connect client ", client['adapter']['rooms']);
 		if(typeof client.nickname === 'undefined') {
 			io.emit("who are you?", "");
 		}
@@ -117,8 +114,8 @@ io.on('connection', function(socket){
 	// all connections should have a name by now so any undefined values are orphan connections
 	socket.on('disconnect', function() {
 		console.log('disconnecting');
-		io.emit('leave room', clientNames[socket['client']['conn']['id']] + " disconnected (" + getDate() + ")");
-		// delete clientSockets
+  	io.emit('leave room', clientNames[socket['client']['conn']['id']] + " disconnected (" + getDate() + ")");
+ 		// delete clientSockets
 		delete clientNames[socket['client']['conn']['id']];
 		cleanupDeadConnections();
 		io.emit('updateContactList', updateNameList());

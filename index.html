@@ -54,17 +54,14 @@
 		<script src="/socket.io/socket.io.js"></script>
 		<script src="http://code.jquery.com/jquery-2.1.1.js"></script>
 		<script>
-			// review image for all pictures
+			// create socket instance
 			var socket = io();
 			// will keep track of if we should update status of typing
 			var typingList = [];
 			// ping length before going back to regular status
 			var pingLength = 2000;
-			// couldn't figure out the broadcast object flag to we are using a 
 			// our name this is important since we might change our name during the typing cooldown status
 			var currentName = "";
-			// previous name
-	 		var previousName = "";
 			// trim the li listing 
 			var liMax = 40;
 			// default title
@@ -87,9 +84,13 @@
       function switchme(obj) {
         if ($(obj).attr("class") == "flagoff") {
           $(obj).attr("class", "flagon");
+          privateChatList.push($(obj).attr("id"));
         }
         else {
-          $(obj).attr("class", "flagoff");
+          index = $.inArray($(obj).attr("id"), privateChatList);
+          if (index) {
+            privateChatList.splice(index, 1);
+          }
         }
       }
 
@@ -250,7 +251,6 @@
 				}
 			}
 
-
       function hasPrivateCheck() {
         // clean up chatlist
         privateChatList = [];
@@ -267,8 +267,9 @@
       function findPrivateChatUser(userID) {
 //        console.log(privateChatList);
         for (var key in privateChatList) {
-//          console.log(privateChatList[key]);
+          console.log("users ",userID, privateChatList[key]);
           if (userID == privateChatList[key]) {
+            console.log("found", userID, privateChatList[key]);
             return true;
           }
         }
@@ -308,7 +309,6 @@
 			});
 
 			$('#uname').change(function() {
-				previousName = currentName;
 				socket.nickname = currentName = $('#uname').val();
 				socket.emit('uname', socket.nickname);
 				socket.emit('updateContactList', socket.nickname);
@@ -338,6 +338,7 @@
 
 			// update contact list from main socket
 			socket.on('updateContactList', function(myList){
+        console.log("update contact list");
 				$('#contactlist').html(myList);
         persistPrivateChatStatus();
 				//alert("socket updatecontactlist");	
