@@ -30,12 +30,13 @@
       .flagon { font-weight: bolder; color: red; }
 			div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
 			div.pmflagon { float: left; background-color: red; margin-right: 5px; }
+      .clearBtn { border-bottom: 1px solid white; }
 		</style>
 	</head>
 	<body>
 		<div id="formArea">
 			<form action="">
-				<input id="uname" value="anon"/>
+        <input id="uname" value="anon"/><button class='clearBtn' type="button">clear</button>
 				<input id="m" autocomplete="off" /><button>Send</button>
 			</form>
 		</div>
@@ -58,7 +59,9 @@
 			var socket = io();
 			// will keep track of if we should update status of typing
 			var typingList = [];
-			// ping length before going back to regular status
+      // my ID
+      var myID = "";
+			// ping length before going back to regular status      
 			var pingLength = 2000;
 			// our name this is important since we might change our name during the typing cooldown status
 			var currentName = "";
@@ -81,16 +84,24 @@
 			socket.emit('join room', socket.nickname);
 			socket.emit('updateContactList', socket.nickname);			
 
+      $(".clearBtn").click(function() {
+   			$("#messages").html("");
+      });
+      
       function switchme(obj) {
         if ($(obj).attr("class") == "flagoff") {
-          $(obj).attr("class", "flagon");
-          privateChatList.push($(obj).attr("id"));
+          // only change if it's not me
+          if ($(obj).attr("id") != myID) {
+            $(obj).attr("class", "flagon");
+            privateChatList.push($(obj).attr("id"));
+          }
         }
         else {
           index = $.inArray($(obj).attr("id"), privateChatList);
           if (index) {
             privateChatList.splice(index, 1);
           }
+          $(obj).attr("class", "flagoff");
         }
       }
 
@@ -267,7 +278,7 @@
       function findPrivateChatUser(userID) {
 //        console.log(privateChatList);
         for (var key in privateChatList) {
-          console.log("users ",userID, privateChatList[key]);
+//          console.log("users ",userID, privateChatList[key]);
           if (userID == privateChatList[key]) {
             console.log("found", userID, privateChatList[key]);
             return true;
@@ -319,7 +330,8 @@
 			});
 
       socket.on('connected', function(msg) {
-          alert("connected");
+//          console.log("connected", msg);
+          myID = msg;
       });
 
 			socket.on('set command', function(msg) {
@@ -338,7 +350,7 @@
 
 			// update contact list from main socket
 			socket.on('updateContactList', function(myList){
-        console.log("update contact list");
+//        console.log("update contact list");
 				$('#contactlist').html(myList);
         persistPrivateChatStatus();
 				//alert("socket updatecontactlist");	

@@ -107,6 +107,7 @@ io.on('connection', function(socket){
 			clientNames[client['client']['conn']['id']] = client.nickname;
 			cleanupDeadConnections();
 		}
+    client.emit("connected", client['client']['conn']['id']);
 	//console.log("connect ", clientNames);
 	});
 
