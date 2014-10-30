@@ -130,9 +130,12 @@ io.on('connection', function(socket){
 	// listen to socket command and set array with id and name.  This will allow us to update the 
 	// array contact listing no problem
 	socket.on("who are you?", function(name) {
-		console.log("who are you?", name);
+		console.log("who are you?", name, socket['client']['conn']['id']);
 		clientNames[socket['client']['conn']['id']] = name;
+    console.log(clientNames);
 		socket.nickname = name;
+    // figure out id and pass it back
+    socket.emit( "connection id", socket['client']['conn']['id']);
 		io.emit('updateContactList', updateNameList());
 	});
 

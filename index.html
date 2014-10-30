@@ -416,6 +416,10 @@
 				}
 			});
 
+      socket.on("connection id", function(id) {
+        myID = id;
+      });
+
 			// get the names of people 
 			socket.on("who are you?", function() {
 				socket.emit("who are you?", getName());
