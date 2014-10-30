@@ -2,44 +2,12 @@
 <html>
 	<head>
 		<title>Anon Chat</title>
-		<style>
-			* { margin: 0; padding: 0; box-sizing: border-box; }
-			body { font: 13px Helvetica, Arial; }
-			form { xbackground: #000; padding: 3px; width: 100%; }
-			form input { border: 1px solid black; padding: 10px; width: 80%; margin-right: .5%; }
-			form button { width: 19%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-			#messages, .rcol li { list-style-type: none; margin: 0; padding: 0; }
-			#messages li { padding: 5px 10px; }
-			#messages li:nth-child(odd) { background: #eee; }
-			.myText { text-align: right; }
-			.myText .chatName { color: red; }
- 			.contactlist { overflow-y: auto; border: 0px solid red; }
-      .contactlist li { padding: 5px 5px; border: 0px solid yellow; }
-			.contactlist li:nth-child(even) { background: #eee; }
-			.chatName { color: orange; font-weight: bolder; }
- 			.lcol { float: left; padding: 10px; width: 80%; border-right: 0px dashed blue; }
-			.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
-			.rcol { float: right; padding: 10px; width: 15%; border-left: 0px dotted #7FFF00; }
-			.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 80%; overflow-y: auto; }
-			.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
-			.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
-			.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
-			.chatStatus4 { font-style: italic; color: white; background-color: black; font-size: 14px; text-align: center; }
-			#messages li.chatStatus51 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
-			#messages li.chatStatus52 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
-      .flagoff { font-weight: bolder; }
-      .flagon { font-weight: bolder; color: red; }
-			div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
-			div.pmflagon { float: left; background-color: red; margin-right: 5px; }
-			.clearBtn { font-weight: bolder; border-bottom: 1px solid white; width: 9%; }
-			.trimon { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  #7CFC00 }
-			.trimoff { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background:  red }
-		</style>
+		<link rel="stylesheet" href="client.css"></link>
 	</head>
 	<body>
 		<div id="formArea">
 			<form action="">
-        <input id="uname" value="anon"/><button class='clearBtn' type="button">clear</button><button id='trimBtn' class='trimon' type="button">TRIM</button>
+				<input id="uname" value="anon"/><button class='clearBtn' type="button">clear</button><button id='trimBtn' class='trimon' type="button">TRIM</button>
 				<input id="m" autocomplete="off" /><button>Send</button>
 			</form>
 		</div>
@@ -62,13 +30,13 @@
 			var socket = io();
 			// will keep track of if we should update status of typing
 			var typingList = [];
-      // my ID
-      var myID = "";
-			// ping length before going back to regular status      
+			// my ID
+			var myID = "";
+			// ping length before going back to regular status
 			var pingLength = 2000;
 			// our name this is important since we might change our name during the typing cooldown status
 			var currentName = "";
-			// trim the li listing 
+			// trim the li listing
 			var liMax = 50;
 			// trim switch to turn on or off
 			var trimSwitch = true;
@@ -80,23 +48,34 @@
 			var defaultTitle = "Anon Chat";
 			// emoticon directory
 			var emoteDir = "emote/";
-      // keep track of private chatlist
-      var privateChatList = [];
-      // private label
-      var privateLabel = "%%PRIVATE%%";
+			// keep track of private chatlist
+			var privateChatList = [];
+			// private label
+			var privateLabel = "%%PRIVATE%%";
+			// window focus
+			var window_focus = false;
+			// current title
+			var currentTitle = document.title;
+			// away message
+			var away = [];
+			away[0] = "You have ...";
+			away[1] = "New message ...";
+			// incoming messages
+			var incomingMessages = 0;
 
 			if ("anon" == $('#uname').val()) {
 				$('#uname').val("anon-" + Math.ceil(Math.random() * 1000));
 			}
+
+
+			toggleText();
 			socket.nickname = currentName = $('#uname').val();
 			socket.emit('uname', socket.nickname);
 			socket.emit('join room', socket.nickname);
-			socket.emit('updateContactList', socket.nickname);			
-
-      $(".clearBtn").click(function() {
-   			$("#messages").html("");
-      });
-
+			socket.emit('updateContactList', socket.nickname);	
+			$(".clearBtn").click(function() {
+				$("#messages").html("");
+			});
 			$("#trimBtn").click(function() {
 				if ($(this).attr("class") == "trimoff") {
 					$(this).attr("class", "trimon");
@@ -105,7 +84,14 @@
 					$(this).attr("class", "trimoff");
 				}
 				findTrimSwitch();
-      });
+			});
+
+			$(window).focus(function() {
+				window_focus = true;
+				$(document).prop('title', currentTitle);				
+			}).blur(function() {
+				window_focus = false;
+		  });
 
 			function findTrimSwitch() {
 				if ($("#trimBtn").attr("class") == "trimoff") {
@@ -115,7 +101,33 @@
 					trimSwitch = true;
 				}
 			}
-
+			function toggleText() {
+				//console.log(incomingMessages);
+				if (!incomingMessages) {
+					// do nothing
+				}
+				else {
+					if (false == window_focus) {
+						if (incomingMessages) {
+							if (away[0] == document.title) {
+								$(document).prop('title', away[1]);
+//								console.log("toggleText0", $(document).prop('title'), away[1]);
+							}
+							else {
+								$(document).prop('title', away[0]);
+//								console.log("toggleText1", $(document).prop('title'), away[0]);
+							}
+						}
+					}
+					else {
+						incomingMessages = 0;
+						if (document.title != currentTitle) {
+							document.title = currentTitle;
+						}
+					}
+				}
+				setTimeout( toggleText, pingLength);
+			}
 			function appendToMessage(msg) {
 				if (appendOrientation == "top") {
 					$("#messages").prepend(msg);
@@ -123,33 +135,32 @@
 				else {
 					$("#messages").append(msg);
 				}
+				if (!window_focus) {
+					incomingMessages++;
+				}
 			}
-
-      function switchme(obj) {
-        if ($(obj).attr("class") == "flagoff") {
-          // only change if it's not me
-          if ($(obj).attr("id") != myID) {
-            $(obj).attr("class", "flagon");
-            privateChatList.push($(obj).attr("id"));
-          }
-        }
-        else {
-          index = $.inArray($(obj).attr("id"), privateChatList);
-          if (index) {
-            privateChatList.splice(index, 1);
-          }
-          $(obj).attr("class", "flagoff");
-        }
-      }
-
-      function getName() {
+			function switchme(obj) {
+				if ($(obj).attr("class") == "flagoff") {
+					// only change if it's not me
+					if ($(obj).attr("id") != myID) {
+						$(obj).attr("class", "flagon");
+						privateChatList.push($(obj).attr("id"));
+					}
+				}
+				else {
+					index = $.inArray($(obj).attr("id"), privateChatList);
+					if (index) {
+						privateChatList.splice(index, 1);
+					}
+					$(obj).attr("class", "flagoff");
+				}
+			}
+			function getName() {
 				return $('#uname').val();
 			}
-
 			function boldMe(content) {
 				return "<b>" + content + "</b>";
 			}
-
 			function trimLi() {
 				while ($("#messages li").length > liMax) {
 					if (trimOrientation == "top") {
@@ -160,8 +171,7 @@
 					}
 				}
 			}
-
-			// update status of the users 
+			// update status of the users
 			function updateTypeStatus(user) {
 				var currentUserName = "";
 				$( "#contactlist li" ).each(function( index ) {
@@ -182,17 +192,16 @@
 							}, pingLength);
 						}
 						$(this).html( boldMe($(this).text() + " (typing)"));	
-						//alert($(this).text() + "   " + $(this).attr('id'));
+						//alert($(this).text() + " " + $(this).attr('id'));
 					}
 				});
 			}
-
 			// return proper dates
 			function getDate() {
 				// Create a date object with the current time
 				var now = new Date();
 				// Create an array with the current month, day and time
-//				var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
+				// var date = [ now.getMonth() + 1, now.getDate(), now.getFullYear() ];
 				var date = [ now.getMonth() + 1, now.getDate() ];
 				// Create an array with the current hour, minute and second
 				var time = [ now.getHours(), now.getMinutes(), now.getSeconds() ];
@@ -211,54 +220,46 @@
 				// Return the formatted string
 				return " (" + date.join("/") + " " + time.join(":") + " " + suffix + ") ";
 			}
-
 			// want the scroller to hug the bottom of the pages
 			function hugBottom() {
 				if (trimSwitch) {
 					trimLi();
 				}
 				$("#messages").animate({ scrollTop: $("#messages").height() }, "slow");
-				console.log( $("#messages").height());
+				//console.log( $("#messages").height());
 			}
-
 			// first text within string at any position
 			function textContains(msg, searchStr) {
 				return (msg.toLowerCase().indexOf(searchStr) >= 0);
 			}
-
 			// find text at the start of string
 			function isSetCommand(msg, searchStr) {
 				return (msg.toLowerCase().indexOf(searchStr) == 0);
 			}
-
-			// supportered set commands 
+			// supportered set commands
 			function isValidSetCommand(msg) {
 				return isSetCommand(msg, "/title") || isSetCommand(msg, "/trout");
 			}
-
 			function isEmoticon(msg) {
 				return isSetCommand(msg, ":)") || isSetCommand(msg, ":(");
 			}
-
 			// find if the string contains an image link
 			function isPicture(msg) {
-				return (textContains(msg, ".jpg") || 
-				textContains(msg, ".jpeg") || 
-				textContains(msg, ".png") || 
-				textContains(msg, ".gif") || 
-				textContains(msg, ".tiff") || 
+				return (textContains(msg, ".jpg") ||
+				textContains(msg, ".jpeg") ||
+				textContains(msg, ".png") ||
+				textContains(msg, ".gif") ||
+				textContains(msg, ".tiff") ||
 				textContains(msg, ".jtiff"));
 			}
-
 			function replaceWithEmoticon(content) {
 				currentUrl = window.location.href.replace();
-				content = content.replace(":(", "<img src='" + emoteDir  + "sad.png' />");
+				content = content.replace(":(", "<img src='" + emoteDir + "sad.png' />");
 				content = content.replace(":)", "<img src='" + emoteDir + "happy.png' />");
 				content = content.replace(" :\/ ", "<img src='" + emoteDir + "annoyed.png' />");
 				content = content.replace(" :| ", "<img src='" + emoteDir + "straight.png' />");
 				return content;
 			}
-
 			// disassemble sentence and put them back together with hyperlink / image link
 			function hyperLinkMe(msg) {
 				msgArray = msg.split(" ");
@@ -273,7 +274,7 @@
 						}
 					}
 					else if (isEmoticon(value)) {
-						finalMsg  += replaceWithEmoticon(value);
+						finalMsg += replaceWithEmoticon(value);
 					}
 					else {
 						finalMsg += value + " ";
@@ -281,7 +282,6 @@
 				});
 				return finalMsg.trim();
 			}
-
 			function findSetCommand(msg) {
 				msgArray = msg.split(" ");
 				index = 0;
@@ -297,6 +297,7 @@
 				finalMsg.trim();
 				if (msgArray[0] == "/title") {
 					$(document).prop('title', defaultTitle + ": " + finalMsg);
+   				currentTitle = document.title;
 					appendToMessage($('<li class="chatStatus3">').html("Room is now called: " + finalMsg + getDate()));
 					hugBottom();
 				}
@@ -305,39 +306,37 @@
 					hugBottom();
 				}
 			}
-
-      function hasPrivateCheck() {
-        // clean up chatlist
-        privateChatList = [];
-        hasChecks = false;
- 				$("#contactlist li" ).each(function( index, value) {
+			function hasPrivateCheck() {
+				// clean up chatlist
+				privateChatList = [];
+				hasChecks = false;
+				$("#contactlist li" ).each(function( index, value) {
 					if ("flagon" == $(this).attr('class')) {
-            privateChatList.push($(this).attr('id'));
-            hasChecks = true;
-          }
-        });
-        return hasChecks;
-      }
+						privateChatList.push($(this).attr('id'));
+						hasChecks = true;
+					}
+				});
+				return hasChecks;
+			}
+			function findPrivateChatUser(userID) {
+				// console.log(privateChatList);
+				for (var key in privateChatList) {
+					// console.log("users ",userID, privateChatList[key]);
+					if (userID == privateChatList[key]) {
+						console.log("found", userID, privateChatList[key]);
+						return true;
+					}
+				}
+				return false;
+			}
 
-      function findPrivateChatUser(userID) {
-//        console.log(privateChatList);
-        for (var key in privateChatList) {
-//          console.log("users ",userID, privateChatList[key]);
-          if (userID == privateChatList[key]) {
-            console.log("found", userID, privateChatList[key]);
-            return true;
-          }
-        }
-        return false;
-      }
-      
-      function persistPrivateChatStatus() {
- 				$("#contactlist li" ).each(function( index, value) {
+			function persistPrivateChatStatus() {
+				$("#contactlist li" ).each(function( index, value) {
 					if (findPrivateChatUser($(this).attr('id'))) {
-            $(this).attr('class', "flagon");
-          }
-        });
-      }
+						$(this).attr('class', "flagon");
+					}
+				});
+			}
 
 			$('form').submit(function(){
 				msg = $('#m').val()
@@ -345,14 +344,14 @@
 					if (isValidSetCommand(msg)) {
 						socket.emit('set command', msg);
 					}
-          else if (hasPrivateCheck()) {
-            for (var key in privateChatList) {
-   						socket.emit('private message', { from: getName(), 
-	  									 to: privateChatList[key],
-		  								 msg: msg });
-            }
-            appendToMessage($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " <span class='chatName'>:" + privateLabel + " " + getName() + getDate() + "</span>"));	
-          }
+					else if (hasPrivateCheck()) {
+						for (var key in privateChatList) {
+							socket.emit('private message', { from: getName(),
+								to: privateChatList[key],
+								msg: msg });
+						}
+						appendToMessage($('<li class="myText chatStatus52">').html( hyperLinkMe(msg) + " <span class='chatName'>:" + privateLabel + " " + getName() + getDate() + "</span>"));	
+					}
 					else {
 						appendToMessage($('<li class="myText">').html( hyperLinkMe(msg) + " :<span class='chatName'>" + getName() + getDate() + "</span>"));	
 						socket.emit('b.chat message', "<span class='chatName'>" + getDate() + getName() + "</span>: " + msg);
@@ -362,13 +361,11 @@
 				}
 				return false;
 			});
-
 			$('#uname').change(function() {
 				socket.nickname = currentName = $('#uname').val();
 				socket.emit('uname', socket.nickname);
 				socket.emit('updateContactList', socket.nickname);
 			});
-
 			$('#m').keypress(function() {
 				if (hasPrivateCheck()) {
 					socket.emit('private typing', getName(), privateChatList);
@@ -377,45 +374,38 @@
 					socket.emit('typing', getName());
 				}
 			});
-
-      socket.on('connected', function(msg) {
-          myID = msg;
-      });
-
+			socket.on('connected', function(msg) {
+				myID = msg;
+			});
 			socket.on('set command', function(msg) {
 				findSetCommand(msg);
 			});
-
 			socket.on('chat message', function(msg){
 				appendToMessage($('<li>').html(hyperLinkMe(msg)));
 				hugBottom();
 			});
-
 			socket.on('private message', function(obj){
-          appendToMessage($('<li class="chatStatus51">').html(hyperLinkMe("<span class='chatName'>" + getDate() + obj['from'] + " " + privateLabel + ":</span> " + obj['msg'])));
+				appendToMessage($('<li class="chatStatus51">').html(hyperLinkMe("<span class='chatName'>" + getDate() + obj['from'] + " " + privateLabel + ":</span> " + obj['msg'])));
 				hugBottom();
 			});
-
 			// update contact list from main socket
 			socket.on('updateContactList', function(myList){
-//        console.log("update contact list");
+				// console.log("update contact list");
 				$('#contactlist').html(myList);
-        persistPrivateChatStatus();
-				//alert("socket updatecontactlist");	
+				persistPrivateChatStatus();
+				//alert("socket updatecontactlist");
 			});
-
 			// if user is already typing don't update the list
 			socket.on('typing', function(user) {
 				//$('#contactlist').html();
 				if (user in typingList) {
 					// do nothing
-				} 
+				}
 				else {
 					typingList[user] = 1;
 					updateTypeStatus(user);
 				}
 			});
-
       socket.on("connection id", function(id) {
         myID = id;
       });
@@ -424,12 +414,10 @@
 			socket.on("who are you?", function() {
 				socket.emit("who are you?", getName());
 			});
-
 			socket.on('join room', function(msg){
 				appendToMessage($('<li class="chatStatus1">').html( msg));
 				hugBottom();
 			});
-
 			socket.on('leave room', function(msg){
 				appendToMessage($('<li class="chatStatus2">').html( msg));
 				hugBottom();

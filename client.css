@@ -1,0 +1,31 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font: 13px Helvetica, Arial; }
+form { xbackground: #000; padding: 3px; width: 100%; }
+form input { border: 1px solid black; padding: 10px; width: 80%; margin-right: .5%; }
+form button { width: 19%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+#messages, .rcol li { list-style-type: none; margin: 0; padding: 0; }
+#messages li { padding: 5px 10px; }
+#messages li:nth-child(odd) { background: #eee; }
+.myText { text-align: right; }
+.myText .chatName { color: red; }
+.contactlist { overflow-y: auto; border: 0px solid red; }
+.contactlist li { padding: 5px 5px; border: 0px solid yellow; }
+.contactlist li:nth-child(even) { background: #eee; }
+.chatName { color: orange; font-weight: bolder; }
+.lcol { float: left; padding: 10px; width: 80%; border-right: 0px dashed blue; }
+.lcol ul { xheight:50%; overflow:hidden; overflow-y: none;}
+.rcol { float: right; padding: 10px; width: 15%; border-left: 0px dotted #7FFF00; }
+.innerMessageArea { position: absolute; top: 90px; bottom: 10px; left: 10px;	width: 80%; overflow-y: auto; }
+.chatStatus1 { font-style: italic; color: orange;	font-size: 18px;	text-align: center; }
+.chatStatus2 { font-style: italic; color: red; font-size: 18px;	text-align: center; }
+.chatStatus3 { font-style: italic; color: blue;	font-size: 18px; text-align: center; }
+.chatStatus4 { font-style: italic; color: white; background-color: black; font-size: 14px; text-align: center; }
+#messages li.chatStatus51 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
+#messages li.chatStatus52 { font-style: italic; color: #7CFC00;	background-color: black; font-size: 14px; }
+.flagoff { font-weight: bolder; }
+.flagon { font-weight: bolder; color: red; }
+div.pmflagoff { float: left; background-color: none; margin-right: 5px; }
+div.pmflagon { float: left; background-color: red; margin-right: 5px; }
+.clearBtn { font-weight: bolder; border-bottom: 1px solid white; width: 9%; }
+.trimon { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background: #7CFC00 }
+.trimoff { font-weight: bolder; border-left: 1px solid white; border-bottom: 1px solid white; width: 10%; background: red }
