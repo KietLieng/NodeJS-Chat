@@ -1,5 +1,5 @@
 # Introduction I'm split
-## casual users view - you just want to run the program and get to chatting
+## casual users view - download and double-click get to chatting
 ### Windows OS
 1. Download the files
 2. Double-click on the start.bat
