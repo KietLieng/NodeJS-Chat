@@ -1,3 +1,13 @@
+# Introduction I'm split
+## casual users view - you just want to run the program and get to chatting
+### Windows OS
+1. Download the files
+2. Double-click on the start.bat
+3. Point the browser to one of the following URL's on the prompt
+4. ????
+5. Profit!
+
+## Developers view - you want to develop the program as it's moving along
 1.  Install node.js http://nodejs.org/
 2.  unzp the code to a directory
 3.  run 'node index.js'
