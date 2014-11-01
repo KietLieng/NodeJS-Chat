@@ -1,3 +1,4 @@
+var os=require('os');
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -185,7 +186,18 @@ io.on('connection', function(socket){
 		console.log("set command", msg);
 	});
 });
-http.listen(3000, function(){
-	console.log('listening on *:3000');
-});
 
+
+var ifaces=os.networkInterfaces();
+  http.listen(3000, function(){
+  	console.log('Possible chat points:');
+    for (var dev in ifaces) {
+      var alias=0;
+      ifaces[dev].forEach(function(details){
+        if (details.family=='IPv4') {
+          console.log("Point browser at " + details.address + ":3000");
+          ++alias;
+        }
+      });
+    }
+});
