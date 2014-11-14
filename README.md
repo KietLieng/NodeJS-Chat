@@ -1,4 +1,4 @@
-# Introduction I'm split
+# Introduction I'm splitting this into casual users and developers
 ## casual users view - download and double-click get to chatting
 ### Windows OS
 1. Download the files
@@ -10,8 +10,8 @@
 ## Developers view - you want to develop the program as it's moving along
 1.  Install node.js http://nodejs.org/
 2.  unzp the code to a directory
-3.  run 'node index.js'
-4.  goto localhost:3000
+3.  run node index.js
+4.  goto localhost:3000 (the terminal will also tell you available ip's to use also)
 
 Caveats to look out for:  If you want a clean setup you can just download the json.package, index.js and index.html page and recreate the node.js environment by using npm (node package manager).
 
@@ -21,4 +21,4 @@ Caveats to look out for:  If you want a clean setup you can just download the js
 4. run npm install socket.io
 5. drop the 3 index files (mentioned above) here.
 5. run node index.js
-6. goto localhost:3000
+4.  goto localhost:3000 (the terminal will also tell you available ip's to use also)
