@@ -1,1 +1,1 @@
-start "nodejs" node.exe server.js
+start nodejs/node.exe server.js
