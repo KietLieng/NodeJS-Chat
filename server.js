@@ -8,13 +8,11 @@ var http = require('http').Server(app);
 // create socket connection object
 var io = require('socket.io')(http);
 
-
 var clientNames = [];
 var lastTyped = "";
 var lastTypedTime = "";
 // set threshold time for when to emit typing status
 var typeThresholdTime = 2;
-
 
 // use express framework to start serving pages
 app.get('/', function(req, res){

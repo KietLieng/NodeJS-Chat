@@ -15,7 +15,7 @@ function setTrimSwitch() {
   }
 }
 
-// We want to toggle text title if we have an incoming message and the current window is not focused
+// toggle text title if we have an incoming message but current window is not focused
 function toggleText() {
   if (incomingMessages) {
     if (false == windowFocus) {
@@ -37,8 +37,10 @@ function toggleText() {
   }
   setTimeout( toggleText, pingLength);
 }
-
-// add message to end top or bottom of page depending on orientation
+/*
+* add message to end top or bottom of page depending on orientation
+* @param msg the message you want to append 
+*/
 function appendToMessage(msg) {
   if (appendOrientation == "top") {
     $("#messages").prepend(msg);
@@ -95,13 +97,16 @@ function trimList() {
   }
 }
 
-// update status of the user currently typing
+/*
+ *  update status of the user currently typing
+ *  @param user: 
+ */
 function updateTypeStatus(user) {
   var currentUserName = "";
   $( "#contactlist li" ).each(function( index ) {
     if (user == $(this).attr('id')) {
       currentUserName = $(this).text();
-      // identify ourselves and set name with currentName
+      // identify ourself and set name with currentName
       if (currentUserName == currentName) {
         setTimeout(function() {
           $("#" + user).html( makeBold(currentName));
